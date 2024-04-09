@@ -1,3 +1,4 @@
+#include "Ball.h"
 #include "Bat.h"
 #include <sstream>
 #include <cstdlib>
@@ -18,6 +19,7 @@ int main()
     Bat bat(1920 / 2, 1080 - 20);
 
     // Add ball
+    Ball ball(1920 / 2, 0);
 
     // HUD
     Text hud;
@@ -70,14 +72,52 @@ int main()
         // Update bat, ball, and HUD
         Time dt = clock.restart();
         bat.update(dt);
+        ball.update(dt);
         std::stringstream ss;
         ss << "Score: " << score << "   Lives: " << lives;
         hud.setString(ss.str());
+
+        // handle ball hitting bottom
+        if (ball.getPosition().top > window.getSize().y)
+        {
+            // reverse ball direction
+            ball.reboundBottom();
+            // remove life
+            lives--;
+            // check for 0 lives
+            if (lives < 1)
+            {
+                score = 0;
+                lives = 3;
+            }
+        }
+
+        // handle ball hitting top
+        if (ball.getPosition().top < 0)
+        {
+            ball.reboundBatOrTop();
+            score++;
+        }
+
+        // handle ball hitting sides
+        if (ball.getPosition().left < 0 || 
+            ball.getPosition().left + ball.getPosition().width > window.getSize().x)
+            {
+                ball.reboundSides();
+            }
+
+        // handle ball hitting bat
+        if (ball.getPosition().intersects(bat.getPosition()))
+        {
+            // intersects function is part of SFML library and is used here to detect a collision
+            ball.reboundBatOrTop();
+        }
 
         // Draw bat, ball, and HUD
         window.clear();
         window.draw(hud);
         window.draw(bat.getShape());
+        window.draw(ball.getShape());
         window.display();
     }
 
